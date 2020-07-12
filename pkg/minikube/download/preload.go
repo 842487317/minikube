@@ -17,17 +17,11 @@ limitations under the License.
 package download
 
 import (
-	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	"cloud.google.com/go/storage"
-	"google.golang.org/api/option"
 	"k8s.io/minikube/pkg/minikube/detect"
 
 	"github.com/pkg/errors"
@@ -89,7 +83,7 @@ func TarballPath(k8sVersion, containerRuntime string) string {
 
 // remoteTarballURL returns the URL for the remote tarball in GCS
 func remoteTarballURL(k8sVersion, containerRuntime string) string {
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", PreloadBucket, TarballName(k8sVersion, containerRuntime))
+	return fmt.Sprintf("https://kubernetes.oss-cn-hangzhou.aliyuncs.com/minikube/%s/%s", PreloadBucket, TarballName(k8sVersion, containerRuntime))
 }
 
 func setPreloadState(k8sVersion, containerRuntime string, value bool) {
@@ -183,9 +177,10 @@ func Preload(k8sVersion, containerRuntime, driverName string) error {
 
 	out.Step(style.FileDownload, "Downloading Kubernetes {{.version}} preload ...", out.V{"version": k8sVersion})
 	url := remoteTarballURL(k8sVersion, containerRuntime)
-
-	checksum, err := getChecksum(k8sVersion, containerRuntime)
 	var realPath string
+
+	/*
+	checksum, err := getChecksum(k8sVersion, containerRuntime)
 	if err != nil {
 		klog.Warningf("No checksum for preloaded tarball for k8s version %s: %v", k8sVersion, err)
 		realPath = targetPath
@@ -198,14 +193,17 @@ func Preload(k8sVersion, containerRuntime, driverName string) error {
 		// add URL parameter for go-getter to automatically verify the checksum
 		url += fmt.Sprintf("?checksum=md5:%s", hex.EncodeToString(checksum))
 	}
+	*/
 
 	if err := download(url, targetPath); err != nil {
 		return errors.Wrapf(err, "download failed: %s", url)
 	}
 
+	/*
 	if err := ensureChecksumValid(k8sVersion, containerRuntime, targetPath, checksum); err != nil {
 		return err
 	}
+	*/
 
 	if realPath != "" {
 		klog.Infof("renaming tempfile to %s ...", TarballName(k8sVersion, containerRuntime))
@@ -220,6 +218,7 @@ func Preload(k8sVersion, containerRuntime, driverName string) error {
 	return nil
 }
 
+/*
 func getStorageAttrs(name string) (*storage.ObjectAttrs, error) {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx, option.WithoutAuthentication())
@@ -248,6 +247,7 @@ func saveChecksumFile(k8sVersion, containerRuntime string, checksum []byte) erro
 	klog.Infof("saving checksum for %s ...", TarballName(k8sVersion, containerRuntime))
 	return ioutil.WriteFile(PreloadChecksumPath(k8sVersion, containerRuntime), checksum, 0o644)
 }
+
 
 // verifyChecksum returns true if the checksum of the local binary matches
 // the checksum of the remote binary
@@ -284,3 +284,4 @@ var ensureChecksumValid = func(k8sVersion, containerRuntime, targetPath string, 
 
 	return nil
 }
+*/
