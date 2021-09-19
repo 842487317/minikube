@@ -780,18 +780,6 @@ func SelectAndPersistImages(addon *Addon, cc *config.ClusterConfig) (images, cus
 
 // fixes addon image names according to image repository used
 func fixAddonImages(repo string, images map[string]string) map[string]string {
-	if repo == "registry.cn-hangzhou.aliyuncs.com/google_containers" {
-		// for aliyun registry must strip namespace from image name, e.g.
-		//   registry.cn-hangzhou.aliyuncs.com/google_containers/k8s-minikube/storage-provisioner:v5 will not work
-		//   registry.cn-hangzhou.aliyuncs.com/google_containers/storage-provisioner:v5 does work
-		newImages := make(map[string]string)
-		for name, image := range images {
-			image = strings.TrimPrefix(image, "k8s-minikube/")
-			image = strings.TrimPrefix(image, "kubernetesui/")
-			newImages[name] = image
-		}
-		return newImages
-	}
 	return images
 }
 

@@ -19,7 +19,6 @@ package download
 import (
 	"context"
 	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -89,7 +88,7 @@ func TarballPath(k8sVersion, containerRuntime string) string {
 
 // remoteTarballURL returns the URL for the remote tarball in GCS
 func remoteTarballURL(k8sVersion, containerRuntime string) string {
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", PreloadBucket, TarballName(k8sVersion, containerRuntime))
+	return fmt.Sprintf("https://kubernetes.oss-cn-hangzhou.aliyuncs.com/minikube/%s/%s", PreloadBucket, TarballName(k8sVersion, containerRuntime))
 }
 
 func setPreloadState(k8sVersion, containerRuntime string, value bool) {
@@ -182,29 +181,34 @@ func Preload(k8sVersion, containerRuntime, driverName string) error {
 
 	out.Step(style.FileDownload, "Downloading Kubernetes {{.version}} preload ...", out.V{"version": k8sVersion})
 	url := remoteTarballURL(k8sVersion, containerRuntime)
-
-	checksum, err := getChecksum(k8sVersion, containerRuntime)
 	var realPath string
-	if err != nil {
-		klog.Warningf("No checksum for preloaded tarball for k8s version %s: %v", k8sVersion, err)
-		realPath = targetPath
-		tmp, err := ioutil.TempFile(targetDir(), TarballName(k8sVersion, containerRuntime)+".*")
+
+	/*
+		checksum, err := getChecksum(k8sVersion, containerRuntime)
+		var realPath string
 		if err != nil {
-			return errors.Wrap(err, "tempfile")
+			klog.Warningf("No checksum for preloaded tarball for k8s version %s: %v", k8sVersion, err)
+			realPath = targetPath
+			tmp, err := ioutil.TempFile(targetDir(), TarballName(k8sVersion, containerRuntime)+".*")
+			if err != nil {
+				return errors.Wrap(err, "tempfile")
+			}
+			targetPath = tmp.Name()
+		} else if checksum != nil {
+			// add URL parameter for go-getter to automatically verify the checksum
+			url += fmt.Sprintf("?checksum=md5:%s", hex.EncodeToString(checksum))
 		}
-		targetPath = tmp.Name()
-	} else if checksum != nil {
-		// add URL parameter for go-getter to automatically verify the checksum
-		url += fmt.Sprintf("?checksum=md5:%s", hex.EncodeToString(checksum))
-	}
+	*/
 
 	if err := download(url, targetPath); err != nil {
 		return errors.Wrapf(err, "download failed: %s", url)
 	}
 
-	if err := ensureChecksumValid(k8sVersion, containerRuntime, targetPath, checksum); err != nil {
-		return err
-	}
+	/*
+		if err := ensureChecksumValid(k8sVersion, containerRuntime, targetPath, checksum); err != nil {
+			return err
+		}
+	*/
 
 	if realPath != "" {
 		klog.Infof("renaming tempfile to %s ...", TarballName(k8sVersion, containerRuntime))
